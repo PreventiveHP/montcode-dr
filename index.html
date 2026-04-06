@@ -12,7 +12,7 @@
         <div class="bg-zinc-900 border-2 border-zinc-800 p-8 rounded-[2.5rem] shadow-2xl">
             <label class="text-[10px] text-blue-400 font-black uppercase tracking-widest block mb-4 italic text-center">Instruction for Patient:</label>
             <input type="text" id="noteInput" class="w-full bg-black border-2 border-zinc-800 rounded-2xl p-5 text-xl text-[#ccff00] font-black outline-none focus:border-[#ccff00] mb-6 uppercase text-center" placeholder="Ex: LOSARTAN 50MG">
-            <button onclick="transmitNote()" id="sendBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl transition-all uppercase tracking-widest text-sm active:scale-95">Push to Patient</button>
+            <button onclick="transmitNote()" id="sendBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl transition-all uppercase tracking-widest text-sm active:scale-95 shadow-lg hover:bg-blue-500">Push to Patient</button>
             <div id="status-box" class="mt-6 text-center">
                 <p id="status-text" class="text-zinc-700 font-bold text-[9px] uppercase tracking-widest italic">Link: Standby</p>
             </div>
@@ -26,11 +26,12 @@
             const status = document.getElementById('status-text');
             const btn = document.getElementById('sendBtn');
             status.innerText = "TRANSMITTING...";
+            status.className = "text-yellow-500 font-bold text-[9px] animate-pulse uppercase tracking-widest italic";
             btn.disabled = true;
 
             try {
-                // LLAMADA A LA API (ESTO BUSCA LA CARPETA /API)
-                const response = await fetch('/api/pusher-relay', {
+                // CAMBIO CLAVE: Apuntamos a /api/relay para evitar el conflicto
+                const response = await fetch('/api/relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: val })
@@ -38,10 +39,12 @@
 
                 if (response.ok) {
                     status.innerText = "SENT SUCCESSFUL ✅";
+                    status.className = "text-[#ccff00] font-bold text-[9px] uppercase tracking-widest italic";
                     document.getElementById('noteInput').value = "";
                 } else { throw new Error(); }
             } catch (e) {
                 status.innerText = "CONNECTION ERROR ❌";
+                status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest italic";
             } finally { btn.disabled = false; }
         }
     </script>
