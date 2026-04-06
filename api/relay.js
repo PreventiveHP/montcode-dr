@@ -1,4 +1,4 @@
- const Pusher = require("pusher");
+const Pusher = require("pusher");
 
 const pusher = new Pusher({
   appId: "1897282",
@@ -9,25 +9,28 @@ const pusher = new Pusher({
 });
 
 module.exports = async (req, res) => {
-  // Configuración de cabeceras para evitar bloqueos del navegador
+  // CONFIGURACIÓN DE SEGURIDAD TOTAL (CORS)
+  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  
+  // Responder rápido a la verificación del navegador
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   const { message } = req.body;
-  console.log("Mensaje recibido en Station One:", message);
 
   try {
-    // IMPORTANTE: Verifica que el canal sea 'test-channel' y el evento 'test-event'
-    // tal cual como está configurado en el Commander del paciente
-    await pusher.trigger("test-channel", "test-event", { 
-      text: message 
-    });
+    await pusher.trigger("test-channel", "test-event", { text: message });
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error("Error de Pusher:", error);
+    console.error("Error en Pusher:", error.message);
     return res.status(500).json({ error: error.message });
   }
 };
