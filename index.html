@@ -3,51 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STATION ONE - DIRECT LINK</title>
-    <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
+    <title>STATION ONE - DIRECT</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 </head>
-<body class="bg-black text-white p-6 flex flex-col items-center min-h-screen">
+<body class="bg-black text-white p-6 font-sans flex flex-col items-center min-h-screen">
     <div class="w-full max-w-md mt-10">
-        <h1 class="text-[#ccff00] text-3xl font-black italic mb-2 text-center uppercase">Station One</h1>
-        <div class="bg-zinc-900 border-2 border-zinc-800 p-8 rounded-[2.5rem]">
-            <input type="text" id="noteInput" class="w-full bg-black border-2 border-zinc-800 rounded-2xl p-5 text-[#ccff00] font-black mb-6 text-center" placeholder="EX: LOSARTAN">
-            <button onclick="sendDirect()" id="sendBtn" class="w-full bg-blue-600 font-black py-5 rounded-2xl uppercase">Push Direct</button>
-            <p id="status" class="mt-4 text-[9px] text-zinc-500 text-center uppercase italic">Status: Standby</p>
+        <h1 class="text-[#ccff00] text-3xl font-black italic tracking-tighter uppercase mb-2 text-center">Station One</h1>
+        <div class="bg-zinc-900 border-2 border-zinc-800 p-8 rounded-[2.5rem] shadow-2xl">
+            <label class="text-[10px] text-blue-400 font-black uppercase tracking-widest block mb-4 italic text-center">Instruction for Patient:</label>
+            <input type="text" id="noteInput" class="w-full bg-black border-2 border-zinc-800 rounded-2xl p-5 text-xl text-[#ccff00] font-black outline-none focus:border-[#ccff00] mb-6 uppercase text-center" placeholder="Ex: LOSARTAN 50MG">
+            <button onclick="sendToPusher()" id="sendBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl transition-all uppercase tracking-widest text-sm active:scale-95 shadow-lg">Push to Patient</button>
+            <div id="status-box" class="mt-6 text-center">
+                <p id="status-text" class="text-zinc-700 font-bold text-[9px] uppercase tracking-widest italic">Link: Standby</p>
+            </div>
         </div>
     </div>
 
     <script>
-        // ESTA ES LA LÓGICA DEL "HOLA MUNDO": Directo a Pusher
-        const pusher = new Pusher('284fc98940a4b6d4c359', { cluster: 'us2', authEndpoint: null });
+        // CONFIGURACIÓN DIRECTA (Como en el Día 2)
+        // Usamos una instancia de Pusher para enviar desde el cliente
+        // Nota: Para que esto funcione, en tu panel de Pusher debe estar activado "Client Events"
+        // o usar un endpoint de autenticación. 
+        
+        async function sendToPusher() {
+            const val = document.getElementById('noteInput').value;
+            const status = document.getElementById('status-text');
+            if(!val) return;
 
-        async function sendDirect() {
-            const msg = document.getElementById('noteInput').value;
-            const status = document.getElementById('status');
-            if(!msg) return;
+            status.innerText = "TRANSMITTING...";
+            status.className = "text-yellow-500 font-bold text-[9px] animate-pulse uppercase tracking-widest italic";
 
-            status.innerText = "SENDING...";
-
-            // Nota: Enviar directamente desde el cliente requiere que el canal sea "client-test"
-            // o usar una pequeña función para no dar error de seguridad. 
-            // Si el Hola Mundo de aquel día funcionó, es porque la ruta era simple.
-            
-            // Si prefieres usar la función de Vercel que ya tenemos:
             try {
-                const res = await fetch('/api/relay', {
+                // ESTA ES LA RUTA QUE VERCEL SÍ RECONOCE CUANDO TODO ESTÁ BIEN
+                const response = await fetch('/api/relay', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ message: msg })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: val })
                 });
-                if(res.ok) {
+
+                if (response.ok) {
                     status.innerText = "SENT SUCCESSFUL ✅";
+                    status.className = "text-[#ccff00] font-bold text-[9px] uppercase tracking-widest italic";
                     document.getElementById('noteInput').value = "";
-                } else { throw new Error(); }
-            } catch(e) {
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
                 status.innerText = "CONNECTION ERROR ❌";
+                status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest italic";
             }
         }
     </script>
 </body>
 </html>
-
