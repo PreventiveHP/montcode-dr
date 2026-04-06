@@ -31,16 +31,10 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 
-        /* Estilo para el Disclaimer Profesional */
         .clinical-disclaimer {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px dashed #333;
-            border-radius: 16px;
-            padding: 15px;
-            font-size: 9px;
-            line-height: 1.4;
-            color: #666;
-            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.03); border: 1px dashed #333;
+            border-radius: 16px; padding: 15px; font-size: 9px;
+            line-height: 1.4; color: #666; margin-top: 20px;
         }
     </style>
 </head>
@@ -73,7 +67,7 @@
                 <span class="live-pulse"></span>
                 <span class="text-[10px] font-black text-red-500 uppercase">Live Feed</span>
             </div>
-            <p id="timer" class="text-[10px] font-mono text-zinc-400">SYNC: 365D REMAINING</p>
+            <p id="timer" class="text-[10px] font-mono text-zinc-400">SYNC ACTIVE</p>
         </div>
     </header>
 
@@ -82,33 +76,23 @@
         <div class="col-span-12 lg:col-span-3 glass-panel p-5 flex flex-col overflow-hidden">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Active Patients</h3>
-                <span class="text-[9px] bg-zinc-800 px-2 py-1 rounded text-zinc-400 font-bold">Total: 1</span>
+                <button onclick="enrollNewPatient()" class="text-[18px] text-[#ccff00] font-bold">+</button>
             </div>
-            <div id="patient-list" class="space-y-3 overflow-y-auto pr-2">
-                <div class="patient-card bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl cursor-pointer transition">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-xs font-black">ID: 102555</span>
-                        <span class="text-[8px] bg-red-900/30 text-red-400 px-2 py-0.5 rounded uppercase font-black">Uncontrolled</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-[9px] font-bold uppercase text-zinc-500">
-                        <span>BP: <b class="text-white">142/91</b></span>
-                        <span>GLU: <b class="text-white">185</b></span>
-                    </div>
+            <div id="patient-list-container" class="space-y-3 overflow-y-auto pr-2">
                 </div>
-            </div>
             <div class="mt-auto pt-4 border-t border-zinc-800">
-                <button onclick="clearSystem()" class="w-full text-[9px] font-black text-red-500/50 uppercase tracking-widest hover:text-red-500 transition">Purge Encrypted Data</button>
+                <button onclick="clearSystem()" class="w-full text-[9px] font-black text-red-500/50 uppercase tracking-widest hover:text-red-500 transition">Purge Local Directory</button>
             </div>
         </div>
 
         <div class="col-span-12 lg:col-span-9 glass-panel p-6 flex flex-col overflow-y-auto">
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h4 class="text-xl font-black italic uppercase">Clinical Profile: <span id="current-id">102555</span></h4>
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Multi-Pathology Logic System</p>
+                    <h4 class="text-xl font-black italic uppercase">Profile: <span id="display-name" class="neon-lime">---</span></h4>
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Clinical ID: <span id="current-id">None</span></p>
                 </div>
                 <div class="flex gap-3">
-                    <button onclick="exportToPDF()" class="bg-blue-600 text-white text-[10px] font-black px-5 py-2.5 rounded-xl uppercase hover:bg-blue-500 transition">Export EMR PDF</button>
+                    <button onclick="exportToPDF()" class="bg-blue-600 text-white text-[10px] font-black px-5 py-2.5 rounded-xl uppercase shadow-lg">Export EMR PDF</button>
                     <button onclick="location.reload()" class="bg-zinc-800 text-zinc-400 text-[10px] font-black px-4 py-2.5 rounded-xl uppercase">Lock Session</button>
                 </div>
             </div>
@@ -127,23 +111,20 @@
             <div class="bg-blue-900/10 border-2 border-blue-600/30 rounded-3xl p-6 mb-6">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="live-pulse"></div>
-                    <h5 class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Clinical Push-Instruction</h5>
+                    <h5 class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Push Clinical Instruction</h5>
                 </div>
                 <div class="flex gap-4">
                     <input type="text" id="drNote" class="flex-grow bg-black border-2 border-zinc-800 rounded-2xl p-4 text-white font-bold text-sm outline-none focus:border-blue-500 uppercase" placeholder="INSTRUCTION FOR PATIENT DASHBOARD">
-                    <button onclick="transmitToPatient()" class="bg-blue-600 text-white px-8 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition">Push</button>
+                    <button onclick="transmitToPatient()" class="bg-blue-600 text-white px-8 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition">Push</button>
                 </div>
             </div>
 
             <div class="clinical-disclaimer">
                 <b class="text-zinc-400 uppercase block mb-1">Provider Clinical Notice & Liability Shield:</b>
-                The data displayed in this dashboard is strictly <b>Patient-Generated Health Data (PGHD)</b>, captured via third-party measurement devices independently operated by the patient. 
-                MontCode™ Sentinel facilitates the telemetry and analysis of these values based on <b>AHA (Hypertension)</b> and <b>AACE (Diabetes)</b> established guidelines for clinical decision support. 
-                This interface does not constitute an official medical record nor a primary diagnostic tool. The Provider assumes full responsibility for clinical correlation and diagnostic validation before initiating or modifying therapeutic interventions. 
-                Data transmission is HIPAA-compliant via local encryption and peer-to-peer cloud syncing.
+                Patient-Generated Health Data (PGHD) via third-party devices. Analysis based on AHA/AACE guidelines.
+                Local directory mapping (Name/DOB) exists only on this terminal. No PHI is stored in the MontCode cloud.
             </div>
         </div>
-
     </div>
 
     <script type="module">
@@ -159,12 +140,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        let selectedID = "102555"; // Default Demo
+
         window.checkEnroll = function() {
             const code = document.getElementById('providerCode').value;
             if(code.startsWith('102') && code.length === 6) {
                 document.getElementById('step-enroll').classList.add('hidden');
                 document.getElementById('step-pin').classList.remove('hidden');
-            } else { alert("ACCESS DENIED: INVALID PROVIDER CODE"); }
+            } else { alert("INVALID PROVIDER CODE"); }
         };
 
         window.saveSecurity = function() {
@@ -173,18 +156,63 @@
                 document.getElementById('security-overlay').classList.add('opacity-0', 'pointer-events-none');
                 document.getElementById('app-container').classList.remove('locked');
                 initCharts();
-            } else { alert("SECURITY PIN REQUIRED"); }
+                renderPatientList();
+            } else { alert("4-DIGIT PIN REQUIRED"); }
+        };
+
+        // ENROLLMENT LOGIC (LOCAL ONLY)
+        window.enrollNewPatient = function() {
+            const id = prompt("Ingrese ID del Paciente (Ej: 102555):");
+            if(!id) return;
+            const name = prompt("Nombre completo (Uso local del Dr):");
+            const dob = prompt("DOB (MM/DD/YYYY):");
+
+            if(name && dob) {
+                const directory = JSON.parse(localStorage.getItem('sentinel_dir') || '{}');
+                directory[id] = { name, dob };
+                localStorage.setItem('sentinel_dir', JSON.stringify(directory));
+                renderPatientList();
+            }
+        };
+
+        window.renderPatientList = function() {
+            const directory = JSON.parse(localStorage.getItem('sentinel_dir') || '{}');
+            const container = document.getElementById('patient-list-container');
+            container.innerHTML = "";
+
+            Object.keys(directory).forEach(id => {
+                const p = directory[id];
+                const card = document.createElement('div');
+                card.className = "patient-card bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl cursor-pointer transition";
+                card.onclick = () => selectPatient(id);
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs font-black uppercase text-blue-400">${p.name}</span>
+                        <span class="text-[8px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-400">DOB: ${p.dob}</span>
+                    </div>
+                    <div class="text-[9px] font-bold text-zinc-600 uppercase">Clinical ID: ${id}</div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // Cargar datos del seleccionado
+            const current = directory[selectedID] || { name: "Demo Patient", dob: "01/01/1970" };
+            document.getElementById('display-name').innerText = current.name;
+            document.getElementById('current-id').innerText = selectedID;
+        };
+
+        window.selectPatient = function(id) {
+            selectedID = id;
+            renderPatientList();
         };
 
         window.transmitToPatient = function() {
             const note = document.getElementById('drNote').value;
             if(!note) return;
             set(ref(db, 'mensaje_dr'), {
-                texto: note,
-                timestamp: Date.now(),
-                provider: "SENTINEL-ALPHA"
+                texto: note, timestamp: Date.now(), provider: "SENTINEL-1"
             }).then(() => {
-                alert("PUSH SUCCESSFUL: DATA TRANSMITTED TO PATIENT");
+                alert("PUSH SUCCESSFUL: INSTRUCTION SENT");
                 document.getElementById('drNote').value = "";
             });
         };
@@ -198,22 +226,14 @@
                     x: { grid: { display: false }, ticks: { color: '#444', font: { size: 8 } } }
                 }
             };
-
             new Chart(document.getElementById('bpChart'), {
                 type: 'line',
-                data: {
-                    labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
-                    datasets: [{ label: 'SYS', data: [138, 142, 145, 140, 139, 148, 142], borderColor: '#ef4444', borderWidth: 2, tension: 0.4 }]
-                },
+                data: { labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], datasets: [{ data: [138, 142, 145, 140, 139, 148, 142], borderColor: '#ef4444', borderWidth: 2, tension: 0.4 }] },
                 options: commonOptions
             });
-
             new Chart(document.getElementById('glucoseChart'), {
                 type: 'bar',
-                data: {
-                    labels: ['PR-B', 'PO-B', 'PR-L', 'PO-L', 'PR-D', 'PO-D'],
-                    datasets: [{ data: [110, 185, 120, 210, 115, 195], backgroundColor: '#ccff00', borderRadius: 4 }]
-                },
+                data: { labels: ['PR-B', 'PO-B', 'PR-L', 'PO-L', 'PR-D', 'PO-D'], datasets: [{ data: [110, 185, 120, 210, 115, 195], backgroundColor: '#ccff00', borderRadius: 4 }] },
                 options: commonOptions
             });
         }
@@ -221,31 +241,24 @@
         window.exportToPDF = function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            const directory = JSON.parse(localStorage.getItem('sentinel_dir') || '{}');
+            const p = directory[selectedID] || { name: "Unknown", dob: "Unknown" };
+
             doc.setFillColor(0, 0, 0); doc.rect(0, 0, 210, 297, 'F');
-            doc.setTextColor(204, 255, 0); doc.setFontSize(20); doc.text("MONTCODE™ SENTINEL | CLINICAL REPORT", 20, 30);
-            
-            doc.setTextColor(255, 255, 255); doc.setFontSize(9);
-            doc.text(`Patient ID: 102555 | Report Date: ${new Date().toLocaleDateString()}`, 20, 45);
-            doc.text("Guidelines Applied: AHA Hypertension 2017 / AACE Glycemic Standards", 20, 50);
-            
-            doc.setDrawColor(40, 40, 40); doc.line(20, 55, 190, 55);
-            
-            doc.setFontSize(10); doc.text("EXECUTIVE DATA SUMMARY:", 20, 70);
-            doc.setFontSize(8); doc.setTextColor(150, 150, 150);
-            doc.text("- Hemodynamic Status: Stage 2 Hypertension identified in 40% of readings.", 25, 80);
-            doc.text("- Glycemic Variability: Post-prandial excursions above 180 mg/dL detected.", 25, 86);
-            
-            // Disclaimer en el PDF (Protección para el EMR)
+            doc.setTextColor(204, 255, 0); doc.setFontSize(20); doc.text("MONTCODE™ SENTINEL REPORT", 20, 30);
+            doc.setTextColor(255, 255, 255); doc.setFontSize(10);
+            doc.text(`Patient: ${p.name.toUpperCase()}`, 20, 45);
+            doc.text(`DOB: ${p.dob} | Clinical ID: ${selectedID}`, 20, 52);
+            doc.setDrawColor(40, 40, 40); doc.line(20, 60, 190, 60);
             doc.setFontSize(7); doc.setTextColor(80, 80, 80);
-            const disclaimerText = "NOTICE TO MEDICAL RECORDS: This report contains Patient-Generated Health Data (PGHD). All values were captured using patient-owned devices and synchronized via MontCode. The clinical analysis is provided for educational/supportive purposes only. Provider clinical correlation required.";
-            doc.text(doc.splitTextToSize(disclaimerText, 170), 20, 270);
-            
-            doc.save("MontCode_Sentinel_102555.pdf");
+            const disclaimer = "NOTICE: This report contains Patient-Generated Health Data (PGHD). Mapping of ID to Name is local to the provider terminal for HIPAA compliance. No PHI stored on MontCode Cloud.";
+            doc.text(doc.splitTextToSize(disclaimer, 170), 20, 270);
+            doc.save(`Sentinel_${selectedID}.pdf`);
         };
 
         window.clearSystem = function() {
-            if(confirm("HIPAA PURGE: Permanently delete all local telemetry?")) {
-                localStorage.clear(); location.reload();
+            if(confirm("DANGER: This will delete the Local Name Directory. Cloud IDs will remain anonymous.")) {
+                localStorage.removeItem('sentinel_dir'); location.reload();
             }
         };
     </script>
