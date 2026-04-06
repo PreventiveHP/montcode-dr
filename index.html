@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -29,7 +29,27 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // 1. Importamos las librerías necesarias de Google
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // 2. Tu configuración personalizada de MontCode
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U",
+            authDomain: "montcode-e02c7.firebaseapp.com",
+            databaseURL: "https://montcode-e02c7-default-rtdb.firebaseio.com",
+            projectId: "montcode-e02c7",
+            storageBucket: "montcode-e02c7.firebasestorage.app",
+            messagingSenderId: "988300151844",
+            appId: "1:988300151844:web:b1a31275a9555de98a9cb1"
+        };
+
+        // 3. Inicializamos la conexión
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 4. La función de envío arreglada
         async function transmitDirect() {
             const val = document.getElementById('noteInput').value;
             if(!val) return;
@@ -37,25 +57,17 @@
             const status = document.getElementById('status-text');
             const btn = document.getElementById('sendBtn');
             
-            status.innerText = "BYPASSING SERVER...";
+            status.innerText = "LINKING TO CLOUD...";
             status.className = "text-yellow-500 font-bold text-[9px] animate-pulse uppercase tracking-widest italic";
             btn.disabled = true;
 
             try {
-                // USAMOS UN RELÉ EXTERNO PARA EVITAR EL ERROR DE VERCEL
-                // Este endpoint es una solución rápida para que el mensaje llegue YA
-                const response = await fetch('https://r.jina.ai/https://pusher-relay-simple.vercel.app/api/relay', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        appId: "1897282",
-                        key: "284fc98940a4b6d4c359",
-                        secret: "9ec09048325a7538a798",
-                        cluster: "us2",
-                        channel: "test-channel",
-                        event: "test-event",
-                        message: val 
-                    })
+                // Escribimos directamente en Firebase
+                // La ruta 'mensaje_dr' es donde el paciente escuchará
+                await set(ref(db, 'mensaje_dr'), {
+                    texto: val,
+                    timestamp: Date.now(),
+                    status: "sent"
                 });
 
                 status.innerText = "SENT SUCCESSFUL ✅";
@@ -63,23 +75,18 @@
                 document.getElementById('noteInput').value = "";
                 
             } catch (e) {
-                // Si falla el relé, intentamos el local por si acaso Vercel despertó
-                try {
-                    await fetch('/api/relay', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: val })
-                    });
-                    status.innerText = "SENT SUCCESSFUL ✅";
-                } catch(err) {
-                    status.innerText = "GATEWAY TIMEOUT ❌";
-                    status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest italic";
-                }
+                console.error("Error de Firebase:", e);
+                status.innerText = "CLOUD ERROR ❌";
+                status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest italic";
             } finally { 
                 btn.disabled = false; 
             }
         }
+
+        // Exponemos la función al botón del HTML
+        window.transmitDirect = transmitDirect;
     </script>
+
     <style>
         .text-glow { text-shadow: 0 0 15px rgba(204, 255, 0, 0.3); }
     </style>
