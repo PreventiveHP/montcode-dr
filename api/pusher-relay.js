@@ -1,4 +1,4 @@
-const Pusher = require("pusher");
+ const Pusher = require("pusher");
 
 const pusher = new Pusher({
   appId: "1897282",
@@ -9,20 +9,15 @@ const pusher = new Pusher({
 });
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+  
   const { message } = req.body;
 
   try {
-    // Enviamos el mensaje al canal del paciente
-    await pusher.trigger("test-channel", "test-event", { 
-      text: message 
-    });
+    // Enviamos al canal que escucha el Paciente
+    await pusher.trigger("test-channel", "test-event", { text: message });
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error("Pusher error:", error);
-    return res.status(500).json({ error: "Failed to send message" });
+    return res.status(500).json({ error: error.message });
   }
 }
