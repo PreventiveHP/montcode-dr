@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -45,8 +45,8 @@
             btn.disabled = true;
 
             try {
-                // LLAMADA A LA API (Debe existir la carpeta api/pusher-relay.js)
-                const response = await fetch('/api/pusher-relay', {
+                // Ajuste de ruta relativa para asegurar conexión con Vercel Functions
+                const response = await fetch('./api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: val })
@@ -57,9 +57,12 @@
                     status.className = "text-[#ccff00] font-bold text-[9px] uppercase tracking-widest italic";
                     document.getElementById('noteInput').value = "";
                 } else {
+                    const errText = await response.text();
+                    console.error("Server Response:", errText);
                     throw new Error();
                 }
             } catch (e) {
+                console.error("Fetch Error:", e);
                 status.innerText = "CONNECTION ERROR ❌";
                 status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest italic";
             } finally {
