@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONTCODE PROVIDER</title>
+    <title>MONTCODE PROVIDER - STATION ONE</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black text-white p-6 font-sans flex flex-col items-center min-h-screen">
@@ -40,28 +40,40 @@
             const status = document.getElementById('status-text');
             const btn = document.getElementById('sendBtn');
             
+            // Estado visual de carga
             status.innerText = "TRANSMITTING...";
             status.className = "text-yellow-500 font-bold text-[9px] animate-pulse uppercase tracking-widest italic";
             btn.disabled = true;
 
             try {
-                // Ajuste de ruta relativa para asegurar conexión con Vercel Functions
-                const response = await fetch('./api/pusher-relay', {
+                // Usamos la ruta absoluta '/api/pusher-relay' para asegurar que encuentre la función en Vercel
+                const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: val })
                 });
 
                 if (response.ok) {
+                    // Éxito: El mensaje salió del servidor hacia Pusher
                     status.innerText = "SENT SUCCESSFUL ✅";
                     status.className = "text-[#ccff00] font-bold text-[9px] uppercase tracking-widest italic";
                     document.getElementById('noteInput').value = "";
+                    
+                    // Limpieza automática del mensaje de éxito después de 3 segundos
+                    setTimeout(() => {
+                        if(status.innerText === "SENT SUCCESSFUL ✅") {
+                            status.innerText = "Link: Standby";
+                            status.className = "text-zinc-700 font-bold text-[9px] uppercase tracking-widest italic";
+                        }
+                    }, 3000);
+
                 } else {
                     const errText = await response.text();
-                    console.error("Server Response:", errText);
-                    throw new Error();
+                    console.error("Server Response Error:", errText);
+                    throw new Error("Relay Error");
                 }
             } catch (e) {
+                // Error de conexión o de servidor
                 console.error("Fetch Error:", e);
                 status.innerText = "CONNECTION ERROR ❌";
                 status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest italic";
@@ -69,6 +81,13 @@
                 btn.disabled = false;
             }
         }
+
+        // Permitir enviar con la tecla Enter
+        document.getElementById('noteInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                transmitNote();
+            }
+        });
     </script>
 </body>
 </html>
