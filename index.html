@@ -42,8 +42,8 @@
             btn.disabled = true;
 
             try {
-                // APUNTANDO AL NUEVO ARCHIVO api/relay.js
-                const response = await fetch('/api/relay', {
+                // Se añade un timestamp (?t=) para saltar la caché de Vercel
+                const response = await fetch(`/api/relay?t=${Date.now()}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: val })
@@ -54,7 +54,6 @@
                     status.className = "text-[#ccff00] font-bold text-[9px] uppercase tracking-widest italic";
                     document.getElementById('noteInput').value = "";
                     
-                    // Resetear mensaje de estado después de 3 segundos
                     setTimeout(() => {
                         if(status.innerText === "SENT SUCCESSFUL ✅") {
                             status.innerText = "Link: Standby";
@@ -62,8 +61,6 @@
                         }
                     }, 3000);
                 } else { 
-                    const errorMsg = await response.text();
-                    console.error("Relay error:", errorMsg);
                     throw new Error(); 
                 }
             } catch (e) {
@@ -74,7 +71,6 @@
             }
         }
 
-        // Enviar con la tecla Enter
         document.getElementById('noteInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 transmitNote();
