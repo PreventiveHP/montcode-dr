@@ -17,7 +17,7 @@
         .patient-card:hover { background: #111; border-color: #ccff00; transform: translateX(5px); }
         .locked { filter: blur(15px) grayscale(1); pointer-events: none; opacity: 0.3; }
         .range-bar { height: 6px; border-radius: 3px; background: #222; overflow: hidden; }
-        .range-fill-green { background: #16a34a; height: 100%; }
+        .range-fill-green { background: #16a34a; height: 100%; transition: width 1s ease-in-out; }
         .clinical-table-row { border-bottom: 1px solid #111; transition: background 0.2s; }
         .clinical-table-row:hover { background: rgba(204, 255, 0, 0.03); }
     </style>
@@ -69,9 +69,9 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div class="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-5">
-                    <h5 class="text-[10px] font-black text-[#ccff00] uppercase tracking-[0.2em] mb-4">Metabolic Trends (Fast vs Post)</h5>
+                    <h5 class="text-[10px] font-black text-[#ccff00] uppercase tracking-[0.2em] mb-4">Metabolic Trends</h5>
                     <div class="space-y-4 mb-4">
-                        <div class="flex justify-between text-[8px] font-black uppercase mb-1"><span>Target (70-180)</span><span class="text-green-500" id="tir-target">0%</span></div>
+                        <div class="flex justify-between text-[8px] font-black uppercase mb-1"><span>Target TIR (70-180)</span><span class="text-green-500" id="tir-target">0%</span></div>
                         <div class="range-bar"><div class="range-fill-green" id="bar-green" style="width: 0%"></div></div>
                     </div>
                     <div class="h-40"><canvas id="glucoseChart"></canvas></div>
@@ -89,15 +89,16 @@
                     <table class="w-full text-left text-[10px] font-bold">
                         <thead class="text-zinc-600 uppercase border-b border-zinc-800">
                             <tr>
-                                <th class="pb-2">Timestamp</th>
-                                <th class="pb-2">Clinical Type</th>
+                                <th class="pb-2">Time</th>
+                                <th class="pb-2">Type</th>
                                 <th class="pb-2">Reading</th>
-                                <th class="pb-2">Context/MAP</th>
+                                <th class="pb-2">Context</th>
                                 <th class="pb-2">Status</th>
                             </tr>
                         </thead>
                         <tbody id="telemetry-table-body" class="text-zinc-300">
-                            </tbody>
+                            <tr><td colspan="5" class="py-10 text-center text-zinc-700 italic">Select patient to sync...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -113,13 +114,14 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U", databaseURL: "https://montcode-e02c7-default-rtdb.firebaseio.com", projectId: "montcode-e02c7" };
         const app = initializeApp(firebaseConfig);
         const fbDB = getDatabase(app);
-        let currentSelectedID = null, bpChart, gluChart;
+        let currentSelectedID = null, bpChart, gluChart, currentListenRef = null;
 
+        // --- SECURITY ---
         window.checkEnroll = () => {
             if(document.getElementById('providerCode').value.startsWith('102')) {
                 document.getElementById('step-enroll').classList.add('hidden');
@@ -133,6 +135,7 @@
             initCharts(); renderPatientList();
         };
 
+        // --- DIRECTORY ---
         window.enrollNewPatient = () => {
             const id = prompt("ENTER PATIENT ID:"), name = prompt("PATIENT NAME:");
             if(id && name) {
@@ -163,13 +166,30 @@
             syncPatientData(id);
         };
 
+        // --- DATA SYNC (CORREGIDO) ---
         function syncPatientData(id) {
-            onValue(ref(fbDB, 'telemetria_paciente'), (snapshot) => {
-                const data = snapshot.val(); if (!data) return;
+            // Detener escucha previa si existe
+            if(currentListenRef) off(currentListenRef);
+            
+            // Ruta exacta donde el app del paciente escribe: pacientes/ID/telemetria
+            currentListenRef = ref(fbDB, `pacientes/${id}/telemetria`);
+            
+            onValue(currentListenRef, (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    resetUI();
+                    return;
+                }
                 const logs = Object.values(data).sort((a,b) => b.time - a.time);
                 updateClinicalVisuals(logs);
                 updateClinicalTable(logs);
             });
+        }
+
+        function resetUI() {
+            document.getElementById('telemetry-table-body').innerHTML = `<tr><td colspan="5" class="py-10 text-center text-zinc-700 italic text-[10px]">NO TELEMETRY DATA FOUND FOR THIS ID</td></tr>`;
+            bpChart.data.labels = []; bpChart.data.datasets.forEach(d => d.data = []); bpChart.update();
+            gluChart.data.labels = []; gluChart.data.datasets[0].data = []; gluChart.update();
         }
 
         function updateClinicalTable(logs) {
@@ -179,17 +199,17 @@
                 const isBP = log.type === "BP";
                 const row = document.createElement('tr');
                 row.className = "clinical-table-row";
+                let statusColor = "text-green-500", statusTxt = "Normal";
                 
-                let statusColor = "text-green-500";
-                if(isBP && log.sys > 140) statusColor = "text-red-500";
-                if(!isBP && (log.val > 180 || log.val < 70)) statusColor = "text-yellow-500";
+                if(isBP && (log.sys > 140 || log.sys < 90)) { statusColor = "text-red-500"; statusTxt = "Crisis?"; }
+                if(!isBP && (log.val > 180 || log.val < 70)) { statusColor = "text-yellow-500"; statusTxt = "Check Meta"; }
 
                 row.innerHTML = `
                     <td class="py-3 text-zinc-500">${new Date(log.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
                     <td class="py-3 font-black ${isBP ? 'text-red-400' : 'text-lime-400'}">${log.type}</td>
                     <td class="py-3 text-white">${isBP ? `${log.sys}/${log.dia}` : `${log.val} mg/dL`}</td>
-                    <td class="py-3 italic text-zinc-400">${isBP ? `MAP: ${log.map}` : log.mode}</td>
-                    <td class="py-3 font-black uppercase ${statusColor}">${isBP && log.sys > 140 ? 'High BP' : (log.val > 180 ? 'Hyper' : 'Normal')}</td>
+                    <td class="py-3 italic text-zinc-500">${isBP ? `MAP: ${log.map}` : log.mode}</td>
+                    <td class="py-3 font-black uppercase ${statusColor}">${statusTxt}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -204,24 +224,37 @@
                 bpChart.data.datasets[2].data = bpLogs.map(l => l.map);
                 bpChart.update();
             }
+
+            const gluLogs = logs.filter(l => l.type === "GLU").slice(0,10).reverse();
+            if(gluLogs.length > 0) {
+                gluChart.data.labels = gluLogs.map((l, i) => i + 1);
+                gluChart.data.datasets[0].data = gluLogs.map(l => l.val);
+                gluChart.update();
+                
+                const tir = Math.round((gluLogs.filter(v => v.val >= 70 && v.val <= 180).length / gluLogs.length) * 100);
+                document.getElementById('tir-target').innerText = tir + "%";
+                document.getElementById('bar-green').style.width = tir + "%";
+            }
         }
 
+        // --- CHARTS & UTILS ---
         function initCharts() {
             const opt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#111' }, ticks: { color: '#444', font: { size: 7 } } }, x: { grid: { display: false }, ticks: { color: '#444', font: { size: 7 } } } } };
-            bpChart = new Chart(document.getElementById('bpChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Sys', data: [], borderColor: '#ef4444', borderWidth: 2 }, { label: 'Dia', data: [], borderColor: '#3b82f6', borderWidth: 2 }, { label: 'MAP', data: [], borderColor: '#ccff00', borderDash: [5,5], borderWidth: 1 }] }, options: opt });
+            bpChart = new Chart(document.getElementById('bpChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Sys', data: [], borderColor: '#ef4444', borderWidth: 2, tension: 0.4 }, { label: 'Dia', data: [], borderColor: '#3b82f6', borderWidth: 2, tension: 0.4 }, { label: 'MAP', data: [], borderColor: '#ccff00', borderDash: [5,5], borderWidth: 1, tension: 0.4 }] }, options: opt });
             gluChart = new Chart(document.getElementById('glucoseChart'), { type: 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: '#ccff00', borderRadius: 4 }] }, options: opt });
         }
 
         window.transmitToPatient = () => {
             const note = document.getElementById('drNote').value;
             if(!note || !currentSelectedID) return;
-            set(ref(fbDB, 'mensaje_dr'), { texto: note, timestamp: Date.now(), targetID: currentSelectedID }).then(() => {
-                alert("PUSH SUCCESSFUL"); document.getElementById('drNote').value = "";
+            // Escribir en la ruta de mensajes que el app del paciente escucha
+            set(ref(fbDB, `mensajes/${currentSelectedID}`), { texto: note, timestamp: Date.now() }).then(() => {
+                alert("PUSH SENT TO PATIENT DEVICE"); document.getElementById('drNote').value = "";
             });
         };
-        
-        window.exportToPDF = () => { /* Logic integrated as before */ };
-        window.clearSystem = () => { if(confirm("CLEAR DATA?")) { localStorage.clear(); location.reload(); } };
+
+        window.clearSystem = () => { if(confirm("DELETE DIRECTORY?")) { localStorage.clear(); location.reload(); } };
+        window.exportToPDF = () => { alert("Exporting clinical data..."); };
     </script>
 </body>
 </html>
