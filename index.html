@@ -168,10 +168,9 @@
 
         // --- DATA SYNC (CORREGIDO) ---
         function syncPatientData(id) {
-            // Detener escucha previa si existe
             if(currentListenRef) off(currentListenRef);
             
-            // Ruta exacta donde el app del paciente escribe: pacientes/ID/telemetria
+            // Apuntamos a la ruta exacta del paciente
             currentListenRef = ref(fbDB, `pacientes/${id}/telemetria`);
             
             onValue(currentListenRef, (snapshot) => {
@@ -187,9 +186,11 @@
         }
 
         function resetUI() {
-            document.getElementById('telemetry-table-body').innerHTML = `<tr><td colspan="5" class="py-10 text-center text-zinc-700 italic text-[10px]">NO TELEMETRY DATA FOUND FOR THIS ID</td></tr>`;
+            document.getElementById('telemetry-table-body').innerHTML = `<tr><td colspan="5" class="py-10 text-center text-zinc-700 italic text-[10px]">NO TELEMETRY DATA FOUND</td></tr>`;
             bpChart.data.labels = []; bpChart.data.datasets.forEach(d => d.data = []); bpChart.update();
             gluChart.data.labels = []; gluChart.data.datasets[0].data = []; gluChart.update();
+            document.getElementById('tir-target').innerText = "0%";
+            document.getElementById('bar-green').style.width = "0%";
         }
 
         function updateClinicalTable(logs) {
@@ -201,14 +202,14 @@
                 row.className = "clinical-table-row";
                 let statusColor = "text-green-500", statusTxt = "Normal";
                 
-                if(isBP && (log.sys > 140 || log.sys < 90)) { statusColor = "text-red-500"; statusTxt = "Crisis?"; }
-                if(!isBP && (log.val > 180 || log.val < 70)) { statusColor = "text-yellow-500"; statusTxt = "Check Meta"; }
+                if(isBP && (log.sys > 140 || log.sys < 90)) { statusColor = "text-red-500"; statusTxt = "Alert"; }
+                if(!isBP && (log.val > 180 || log.val < 70)) { statusColor = "text-yellow-500"; statusTxt = "Review"; }
 
                 row.innerHTML = `
                     <td class="py-3 text-zinc-500">${new Date(log.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
                     <td class="py-3 font-black ${isBP ? 'text-red-400' : 'text-lime-400'}">${log.type}</td>
                     <td class="py-3 text-white">${isBP ? `${log.sys}/${log.dia}` : `${log.val} mg/dL`}</td>
-                    <td class="py-3 italic text-zinc-500">${isBP ? `MAP: ${log.map}` : log.mode}</td>
+                    <td class="py-3 italic text-zinc-500">${isBP ? `MAP: ${log.map}` : (log.mode || 'N/A')}</td>
                     <td class="py-3 font-black uppercase ${statusColor}">${statusTxt}</td>
                 `;
                 tbody.appendChild(row);
@@ -237,20 +238,28 @@
             }
         }
 
-        // --- CHARTS & UTILS ---
         function initCharts() {
             const opt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#111' }, ticks: { color: '#444', font: { size: 7 } } }, x: { grid: { display: false }, ticks: { color: '#444', font: { size: 7 } } } } };
+            if (bpChart) bpChart.destroy();
+            if (gluChart) gluChart.destroy();
             bpChart = new Chart(document.getElementById('bpChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Sys', data: [], borderColor: '#ef4444', borderWidth: 2, tension: 0.4 }, { label: 'Dia', data: [], borderColor: '#3b82f6', borderWidth: 2, tension: 0.4 }, { label: 'MAP', data: [], borderColor: '#ccff00', borderDash: [5,5], borderWidth: 1, tension: 0.4 }] }, options: opt });
             gluChart = new Chart(document.getElementById('glucoseChart'), { type: 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: '#ccff00', borderRadius: 4 }] }, options: opt });
         }
 
         window.transmitToPatient = () => {
             const note = document.getElementById('drNote').value;
-            if(!note || !currentSelectedID) return;
-            // Escribir en la ruta de mensajes que el app del paciente escucha
-            set(ref(fbDB, `mensajes/${currentSelectedID}`), { texto: note, timestamp: Date.now() }).then(() => {
-                alert("PUSH SENT TO PATIENT DEVICE"); document.getElementById('drNote').value = "";
-            });
+            if(!note || !currentSelectedID) {
+                alert("SELECT PATIENT FIRST");
+                return;
+            }
+            // ESCUCHA: El paciente escucha en mensajes/ID
+            set(ref(fbDB, `mensajes/${currentSelectedID}`), { 
+                texto: note, 
+                timestamp: Date.now() 
+            }).then(() => {
+                alert("PUSH SENT TO PATIENT"); 
+                document.getElementById('drNote').value = "";
+            }).catch(err => alert("SYNC ERROR"));
         };
 
         window.clearSystem = () => { if(confirm("DELETE DIRECTORY?")) { localStorage.clear(); location.reload(); } };
