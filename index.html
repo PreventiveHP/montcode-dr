@@ -26,48 +26,50 @@
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         .patient-card:hover { background: #111; border-color: #ccff00; transform: translateX(5px); }
-        .locked { filter: blur(10px) grayscale(1); pointer-events: none; opacity: 0.3; }
+        .locked { filter: blur(15px) grayscale(1); pointer-events: none; opacity: 0.3; }
         
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        /* Modern Range Bars */
+        .range-bar { height: 6px; border-radius: 3px; background: #222; overflow: hidden; position: relative; }
+        .range-fill-green { background: #16a34a; height: 100%; box-shadow: 0 0 10px rgba(22, 163, 74, 0.5); }
+        .range-fill-yellow { background: #eab308; height: 100%; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
+        .range-fill-red { background: #ef4444; height: 100%; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
 
         .clinical-disclaimer {
-            background: rgba(255, 255, 255, 0.03); border: 1px dashed #333;
-            border-radius: 16px; padding: 15px; font-size: 9px;
-            line-height: 1.4; color: #666; margin-top: 20px;
+            background: rgba(255, 255, 255, 0.02); border: 1px dashed #222;
+            border-radius: 16px; padding: 15px; font-size: 8px;
+            line-height: 1.4; color: #555; margin-top: 20px;
         }
     </style>
 </head>
 <body class="h-screen flex flex-col p-4 md:p-6">
 
     <div id="security-overlay" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center p-6 text-center transition-all duration-700">
-        <img src="logo.png.jpg" class="w-24 h-24 rounded-full border-2 border-[#ccff00] shadow-[0_0_30px_rgba(204,255,0,0.2)] object-cover mb-6">
-        <h1 class="text-3xl font-black neon-lime italic font-family-Orbitron mb-2 uppercase">Clinical Sentinel</h1>
-        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.4em] mb-10">Chronic Disease Control Center</p>
+        <img src="logo.png.jpg" class="w-24 h-24 rounded-full border-2 border-[#ccff00] object-cover mb-6">
+        <h1 class="text-3xl font-black neon-lime italic font-family-Orbitron mb-2">CLINICAL SENTINEL</h1>
+        <p class="text-[9px] text-zinc-600 font-bold uppercase tracking-[0.4em] mb-10">Chronic Care Remote Monitoring</p>
 
         <div id="step-enroll" class="w-full max-w-xs space-y-4">
-            <input type="text" id="providerCode" maxlength="6" class="w-full bg-zinc-900 border-2 border-zinc-800 rounded-2xl p-4 text-center text-white font-black text-xl outline-none focus:border-blue-500 transition" placeholder="ENROLL CODE (102***)">
-            <button onclick="checkEnroll()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-sm shadow-lg active:scale-95 transition">Verify Provider</button>
+            <input type="text" id="providerCode" maxlength="6" class="w-full bg-zinc-900 border-2 border-zinc-800 rounded-2xl p-4 text-center text-white font-black text-xl outline-none focus:border-blue-500 transition" placeholder="PROVIDER CODE">
+            <button onclick="checkEnroll()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-xs shadow-lg active:scale-95 transition">Verify Credentials</button>
         </div>
 
         <div id="step-pin" class="hidden w-full max-w-xs space-y-4">
-            <p class="text-[10px] text-zinc-400 font-bold uppercase mb-2">Create HIPAA Security PIN</p>
-            <input type="password" id="securePin" maxlength="4" class="w-full bg-zinc-900 border-2 border-zinc-800 rounded-2xl p-4 text-center text-[#ccff00] font-black text-2xl tracking-[1em] outline-none focus:border-[#ccff00] transition" placeholder="****">
-            <button onclick="saveSecurity()" class="w-full bg-[#ccff00] text-black font-black py-4 rounded-2xl uppercase tracking-widest text-sm shadow-lg active:scale-95 transition">Lock & Access</button>
+            <input type="password" id="securePin" maxlength="4" class="w-full bg-zinc-900 border-2 border-zinc-800 rounded-2xl p-4 text-center text-[#ccff00] font-black text-2xl tracking-[1em] outline-none" placeholder="****">
+            <button onclick="saveSecurity()" class="w-full bg-[#ccff00] text-black font-black py-4 rounded-2xl uppercase tracking-widest text-xs active:scale-95 transition">Unlock Terminal</button>
         </div>
     </div>
 
     <header class="flex justify-between items-start mb-6">
         <div>
             <h2 class="text-2xl font-black italic uppercase tracking-tighter">MontCode™ <span class="neon-lime">Sentinel</span></h2>
-            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Active Remote Monitoring • HIPAA Encrypted</p>
+            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Protocol V2.0 • HIPAA Local Directory</p>
         </div>
         <div class="text-right">
             <div class="flex items-center gap-2 justify-end mb-1">
                 <span class="live-pulse"></span>
-                <span class="text-[10px] font-black text-red-500 uppercase">Live Feed</span>
+                <span class="text-[10px] font-black text-red-500 uppercase">Remote Sync</span>
             </div>
-            <p id="timer" class="text-[10px] font-mono text-zinc-400">SYNC ACTIVE</p>
+            <p class="text-[9px] font-mono text-zinc-500 uppercase">Encrypted Session</p>
         </div>
     </header>
 
@@ -75,54 +77,63 @@
         
         <div class="col-span-12 lg:col-span-3 glass-panel p-5 flex flex-col overflow-hidden">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Active Patients</h3>
-                <button onclick="enrollNewPatient()" class="text-[18px] text-[#ccff00] font-bold">+</button>
+                <h3 class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Clinical Directory</h3>
+                <button onclick="enrollNewPatient()" class="w-8 h-8 flex items-center justify-center bg-zinc-800 rounded-lg text-[#ccff00] font-bold hover:bg-zinc-700 transition">+</button>
             </div>
             <div id="patient-list-container" class="space-y-3 overflow-y-auto pr-2">
                 </div>
-            <div class="mt-auto pt-4 border-t border-zinc-800">
-                <button onclick="clearSystem()" class="w-full text-[9px] font-black text-red-500/50 uppercase tracking-widest hover:text-red-500 transition">Purge Local Directory</button>
+            <div class="mt-auto pt-4 border-t border-zinc-900">
+                <button onclick="clearSystem()" class="w-full text-[8px] font-black text-zinc-700 uppercase tracking-widest hover:text-red-500 transition">Purge Terminal Data</button>
             </div>
         </div>
 
         <div class="col-span-12 lg:col-span-9 glass-panel p-6 flex flex-col overflow-y-auto">
-            <div class="flex justify-between items-center mb-8">
+            <div class="flex justify-between items-start mb-8">
                 <div>
-                    <h4 class="text-xl font-black italic uppercase">Profile: <span id="display-name" class="neon-lime">---</span></h4>
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Clinical ID: <span id="current-id">None</span></p>
+                    <h4 class="text-xl font-black italic uppercase"><span id="display-name" class="neon-lime">SELECT PATIENT</span></h4>
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">EMR ID: <span id="current-id">----</span></p>
                 </div>
-                <div class="flex gap-3">
-                    <button onclick="exportToPDF()" class="bg-blue-600 text-white text-[10px] font-black px-5 py-2.5 rounded-xl uppercase shadow-lg">Export EMR PDF</button>
-                    <button onclick="location.reload()" class="bg-zinc-800 text-zinc-400 text-[10px] font-black px-4 py-2.5 rounded-xl uppercase">Lock Session</button>
+                <button onclick="exportToPDF()" class="bg-blue-600 text-white text-[9px] font-black px-5 py-2.5 rounded-xl uppercase tracking-widest">Generate EMR Report</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-5">
+                    <div class="flex justify-between items-center mb-6">
+                        <h5 class="text-[10px] font-black text-[#ccff00] uppercase tracking-[0.2em]">Metabolic Time-in-Range</h5>
+                        <span class="text-[9px] font-bold text-zinc-500 uppercase">Last 7 Days</span>
+                    </div>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="flex justify-between text-[8px] font-black uppercase mb-1"><span>Target (70-180)</span><span class="text-green-500">72%</span></div>
+                        <div class="range-bar"><div class="range-fill-green" style="width: 72%"></div></div>
+
+                        <div class="flex justify-between text-[8px] font-black uppercase mb-1"><span>Hyper (>180)</span><span class="text-yellow-500">22%</span></div>
+                        <div class="range-bar"><div class="range-fill-yellow" style="width: 22%"></div></div>
+
+                        <div class="flex justify-between text-[8px] font-black uppercase mb-1"><span>Hypo (<70)</span><span class="text-red-500">6%</span></div>
+                        <div class="range-bar"><div class="range-fill-red" style="width: 6%"></div></div>
+                    </div>
+                    
+                    <div class="h-32"><canvas id="glucoseChart"></canvas></div>
+                </div>
+
+                <div class="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-5">
+                    <h5 class="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] mb-6">Hemodynamic Status (MAP)</h5>
+                    <div class="h-64"><canvas id="bpChart"></canvas></div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div class="bg-black border border-zinc-900 rounded-3xl p-5 shadow-inner">
-                    <h5 class="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] mb-4">Hemodynamic Trend (BP)</h5>
-                    <div class="h-48"><canvas id="bpChart"></canvas></div>
-                </div>
-                <div class="bg-black border border-zinc-900 rounded-3xl p-5 shadow-inner">
-                    <h5 class="text-[10px] font-black text-[#ccff00] uppercase tracking-[0.2em] mb-4">Metabolic Trend (Glucose)</h5>
-                    <div class="h-48"><canvas id="glucoseChart"></canvas></div>
-                </div>
-            </div>
-
-            <div class="bg-blue-900/10 border-2 border-blue-600/30 rounded-3xl p-6 mb-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="live-pulse"></div>
-                    <h5 class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Push Clinical Instruction</h5>
-                </div>
+            <div class="bg-blue-900/10 border border-blue-600/30 rounded-3xl p-6">
+                <h5 class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4">Push Direct Instruction</h5>
                 <div class="flex gap-4">
-                    <input type="text" id="drNote" class="flex-grow bg-black border-2 border-zinc-800 rounded-2xl p-4 text-white font-bold text-sm outline-none focus:border-blue-500 uppercase" placeholder="INSTRUCTION FOR PATIENT DASHBOARD">
-                    <button onclick="transmitToPatient()" class="bg-blue-600 text-white px-8 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition">Push</button>
+                    <input type="text" id="drNote" class="flex-grow bg-black border border-zinc-800 rounded-2xl p-4 text-white font-bold text-sm outline-none focus:border-blue-500 uppercase" placeholder="MESSAGE TO PATIENT'S DASHBOARD...">
+                    <button onclick="transmitToPatient()" class="bg-blue-600 text-white px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest">Push</button>
                 </div>
             </div>
 
             <div class="clinical-disclaimer">
-                <b class="text-zinc-400 uppercase block mb-1">Provider Clinical Notice & Liability Shield:</b>
-                Patient-Generated Health Data (PGHD) via third-party devices. Analysis based on AHA/AACE guidelines.
-                Local directory mapping (Name/DOB) exists only on this terminal. No PHI is stored in the MontCode cloud.
+                <b>OFFICIAL PROVIDER NOTICE:</b> No PHI (Protected Health Information) is transmitted to MontCode servers. 
+                Mapping of ID to Name is strictly stored in this terminal's local storage. This system follows AHA/ADA clinical guidelines for trend analysis.
             </div>
         </div>
     </div>
@@ -139,15 +150,15 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        let currentSelectedID = null;
 
-        let selectedID = "102555"; // Default Demo
-
+        // --- SECURITY LOGIC ---
         window.checkEnroll = function() {
             const code = document.getElementById('providerCode').value;
             if(code.startsWith('102') && code.length === 6) {
                 document.getElementById('step-enroll').classList.add('hidden');
                 document.getElementById('step-pin').classList.remove('hidden');
-            } else { alert("INVALID PROVIDER CODE"); }
+            } else { alert("ACCESS DENIED: INVALID PROVIDER CODE"); }
         };
 
         window.saveSecurity = function() {
@@ -157,52 +168,49 @@
                 document.getElementById('app-container').classList.remove('locked');
                 initCharts();
                 renderPatientList();
-            } else { alert("4-DIGIT PIN REQUIRED"); }
+            } else { alert("PIN MUST BE 4 DIGITS"); }
         };
 
-        // ENROLLMENT LOGIC (LOCAL ONLY)
+        // --- DIRECTORY LOGIC ---
         window.enrollNewPatient = function() {
-            const id = prompt("Ingrese ID del Paciente (Ej: 102555):");
+            const id = prompt("ENTER PATIENT ID (e.g. 102555):");
             if(!id) return;
-            const name = prompt("Nombre completo (Uso local del Dr):");
+            const name = prompt("PATIENT NAME (Local Only):");
             const dob = prompt("DOB (MM/DD/YYYY):");
 
             if(name && dob) {
-                const directory = JSON.parse(localStorage.getItem('sentinel_dir') || '{}');
-                directory[id] = { name, dob };
-                localStorage.setItem('sentinel_dir', JSON.stringify(directory));
+                const dir = JSON.parse(localStorage.getItem('sentinel_dir') || '{}');
+                dir[id] = { name, dob };
+                localStorage.setItem('sentinel_dir', JSON.stringify(dir));
                 renderPatientList();
             }
         };
 
         window.renderPatientList = function() {
-            const directory = JSON.parse(localStorage.getItem('sentinel_dir') || '{}');
+            const dir = JSON.parse(localStorage.getItem('sentinel_dir') || '{}');
             const container = document.getElementById('patient-list-container');
             container.innerHTML = "";
 
-            Object.keys(directory).forEach(id => {
-                const p = directory[id];
+            Object.keys(dir).forEach(id => {
+                const p = dir[id];
                 const card = document.createElement('div');
-                card.className = "patient-card bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl cursor-pointer transition";
+                card.className = `patient-card bg-zinc-900/50 border ${id === currentSelectedID ? 'border-[#ccff00]' : 'border-zinc-800'} p-4 rounded-2xl cursor-pointer transition`;
                 card.onclick = () => selectPatient(id);
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="text-xs font-black uppercase text-blue-400">${p.name}</span>
-                        <span class="text-[8px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-400">DOB: ${p.dob}</span>
+                    <div class="flex justify-between items-start">
+                        <span class="text-[10px] font-black uppercase text-blue-400">${p.name}</span>
+                        <span class="text-[8px] text-zinc-500">ID: ${id}</span>
                     </div>
-                    <div class="text-[9px] font-bold text-zinc-600 uppercase">Clinical ID: ${id}</div>
                 `;
                 container.appendChild(card);
             });
-            
-            // Cargar datos del seleccionado
-            const current = directory[selectedID] || { name: "Demo Patient", dob: "01/01/1970" };
-            document.getElementById('display-name').innerText = current.name;
-            document.getElementById('current-id').innerText = selectedID;
         };
 
         window.selectPatient = function(id) {
-            selectedID = id;
+            const dir = JSON.parse(localStorage.getItem('sentinel_dir') || '{}');
+            currentSelectedID = id;
+            document.getElementById('display-name').innerText = dir[id].name;
+            document.getElementById('current-id').innerText = id;
             renderPatientList();
         };
 
@@ -212,52 +220,55 @@
             set(ref(db, 'mensaje_dr'), {
                 texto: note, timestamp: Date.now(), provider: "SENTINEL-1"
             }).then(() => {
-                alert("PUSH SUCCESSFUL: INSTRUCTION SENT");
+                alert("PUSH SUCCESSFUL");
                 document.getElementById('drNote').value = "";
             });
         };
 
+        // --- CHARTING ENGINE ---
         function initCharts() {
-            const commonOptions = {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    y: { grid: { color: '#111' }, ticks: { color: '#444', font: { size: 8 } } },
-                    x: { grid: { display: false }, ticks: { color: '#444', font: { size: 8 } } }
-                }
+            const commonScales = {
+                y: { grid: { color: '#111' }, ticks: { color: '#444', font: { size: 7 } } },
+                x: { grid: { display: false }, ticks: { color: '#444', font: { size: 7 } } }
             };
+
             new Chart(document.getElementById('bpChart'), {
                 type: 'line',
-                data: { labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], datasets: [{ data: [138, 142, 145, 140, 139, 148, 142], borderColor: '#ef4444', borderWidth: 2, tension: 0.4 }] },
-                options: commonOptions
+                data: {
+                    labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+                    datasets: [
+                        { label: 'Sys', data: [135, 142, 138, 140, 139, 145, 142], borderColor: '#ef4444', borderWidth: 2, tension: 0.4 },
+                        { label: 'Dia', data: [88, 92, 85, 90, 88, 94, 91], borderColor: '#3b82f6', borderWidth: 2, tension: 0.4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: commonScales }
             });
+
             new Chart(document.getElementById('glucoseChart'), {
                 type: 'bar',
-                data: { labels: ['PR-B', 'PO-B', 'PR-L', 'PO-L', 'PR-D', 'PO-D'], datasets: [{ data: [110, 185, 120, 210, 115, 195], backgroundColor: '#ccff00', borderRadius: 4 }] },
-                options: commonOptions
+                data: {
+                    labels: ['B', 'L', 'D'],
+                    datasets: [{ data: [110, 185, 145], backgroundColor: '#ccff00', borderRadius: 4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: commonScales }
             });
         }
 
         window.exportToPDF = function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const directory = JSON.parse(localStorage.getItem('sentinel_dir') || '{}');
-            const p = directory[selectedID] || { name: "Unknown", dob: "Unknown" };
-
+            const name = document.getElementById('display-name').innerText;
+            
             doc.setFillColor(0, 0, 0); doc.rect(0, 0, 210, 297, 'F');
-            doc.setTextColor(204, 255, 0); doc.setFontSize(20); doc.text("MONTCODE™ SENTINEL REPORT", 20, 30);
+            doc.setTextColor(204, 255, 0); doc.setFontSize(22); doc.text("MONTCODE™ SENTINEL EMR", 20, 30);
             doc.setTextColor(255, 255, 255); doc.setFontSize(10);
-            doc.text(`Patient: ${p.name.toUpperCase()}`, 20, 45);
-            doc.text(`DOB: ${p.dob} | Clinical ID: ${selectedID}`, 20, 52);
-            doc.setDrawColor(40, 40, 40); doc.line(20, 60, 190, 60);
-            doc.setFontSize(7); doc.setTextColor(80, 80, 80);
-            const disclaimer = "NOTICE: This report contains Patient-Generated Health Data (PGHD). Mapping of ID to Name is local to the provider terminal for HIPAA compliance. No PHI stored on MontCode Cloud.";
-            doc.text(doc.splitTextToSize(disclaimer, 170), 20, 270);
-            doc.save(`Sentinel_${selectedID}.pdf`);
+            doc.text(`PATIENT: ${name}`, 20, 45);
+            doc.text(`EMR ID: ${currentSelectedID || 'N/A'}`, 20, 52);
+            doc.save(`MontCode_Report_${currentSelectedID}.pdf`);
         };
 
         window.clearSystem = function() {
-            if(confirm("DANGER: This will delete the Local Name Directory. Cloud IDs will remain anonymous.")) {
+            if(confirm("DANGER: DELETE LOCAL DIRECTORY?")) {
                 localStorage.removeItem('sentinel_dir'); location.reload();
             }
         };
