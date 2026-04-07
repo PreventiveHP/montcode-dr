@@ -37,14 +37,17 @@
         </div>
     </div>
 
-    <header class="flex justify-between items-start mb-6">
-        <div>
-            <h2 class="text-2xl font-black italic uppercase tracking-tighter">MontCode™ <span class="neon-lime">Sentinel</span></h2>
-            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Protocol V2.0 • HIPAA Local Directory</p>
+    <header class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full border border-[#ccff00] flex items-center justify-center font-black text-[10px] neon-lime italic bg-zinc-900">MC</div>
+            <div>
+                <h2 class="text-xl font-black italic uppercase tracking-tighter">MontCode™ <span class="neon-lime">Sentinel</span></h2>
+                <p class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">Protocol V2.0 • HIPAA Local Directory</p>
+            </div>
         </div>
         <div class="text-right">
-            <div class="flex items-center gap-2 justify-end mb-1"><span class="live-pulse"></span><span class="text-[10px] font-black text-red-500 uppercase">Remote Sync</span></div>
-            <p class="text-[9px] font-mono text-zinc-500 uppercase">Encrypted Session</p>
+            <div class="flex items-center gap-2 justify-end mb-1"><span class="live-pulse"></span><span class="text-[9px] font-black text-red-500 uppercase">Remote Sync</span></div>
+            <p class="text-[8px] font-mono text-zinc-500 uppercase italic">Encrypted Terminal Session</p>
         </div>
     </header>
 
@@ -106,7 +109,7 @@
             <div class="bg-blue-900/10 border border-blue-600/30 rounded-3xl p-6">
                 <div class="flex gap-4">
                     <input type="text" id="drNote" class="flex-grow bg-black border border-zinc-800 rounded-2xl p-4 text-white font-bold text-sm outline-none focus:border-blue-500 uppercase" placeholder="MESSAGE TO PATIENT'S DASHBOARD...">
-                    <button onclick="transmitToPatient()" class="bg-blue-600 text-white px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest">Push</button>
+                    <button onclick="transmitToPatient()" class="bg-blue-600 text-white px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition">Push</button>
                 </div>
             </div>
         </div>
@@ -151,7 +154,7 @@
             container.innerHTML = "";
             Object.keys(dir).forEach(id => {
                 const card = document.createElement('div');
-                card.className = `patient-card bg-zinc-900/50 border ${id === currentSelectedID ? 'border-[#ccff00]' : 'border-zinc-800'} p-4 rounded-2xl cursor-pointer transition`;
+                card.className = `patient-card bg-zinc-900/50 border ${id === currentSelectedID ? 'border-[#ccff00]' : 'border-zinc-800'} p-4 rounded-2xl cursor-pointer transition mb-3`;
                 card.onclick = () => selectPatient(id);
                 card.innerHTML = `<span class="text-[10px] font-black uppercase text-blue-400">${dir[id].name}</span><br><span class="text-[8px] text-zinc-500">ID: ${id}</span>`;
                 container.appendChild(card);
@@ -160,17 +163,16 @@
 
         window.selectPatient = (id) => {
             currentSelectedID = id;
-            document.getElementById('display-name').innerText = JSON.parse(localStorage.getItem('sentinel_dir'))[id].name;
+            const dir = JSON.parse(localStorage.getItem('sentinel_dir'));
+            document.getElementById('display-name').innerText = dir[id].name;
             document.getElementById('current-id').innerText = id;
             renderPatientList();
             syncPatientData(id);
         };
 
-        // --- DATA SYNC (CORREGIDO) ---
+        // --- DATA SYNC RECTIFIED ---
         function syncPatientData(id) {
             if(currentListenRef) off(currentListenRef);
-            
-            // Apuntamos a la ruta exacta del paciente
             currentListenRef = ref(fbDB, `pacientes/${id}/telemetria`);
             
             onValue(currentListenRef, (snapshot) => {
@@ -187,8 +189,8 @@
 
         function resetUI() {
             document.getElementById('telemetry-table-body').innerHTML = `<tr><td colspan="5" class="py-10 text-center text-zinc-700 italic text-[10px]">NO TELEMETRY DATA FOUND</td></tr>`;
-            bpChart.data.labels = []; bpChart.data.datasets.forEach(d => d.data = []); bpChart.update();
-            gluChart.data.labels = []; gluChart.data.datasets[0].data = []; gluChart.update();
+            if(bpChart) { bpChart.data.labels = []; bpChart.data.datasets.forEach(d => d.data = []); bpChart.update(); }
+            if(gluChart) { gluChart.data.labels = []; gluChart.data.datasets[0].data = []; gluChart.update(); }
             document.getElementById('tir-target').innerText = "0%";
             document.getElementById('bar-green').style.width = "0%";
         }
@@ -252,7 +254,6 @@
                 alert("SELECT PATIENT FIRST");
                 return;
             }
-            // ESCUCHA: El paciente escucha en mensajes/ID
             set(ref(fbDB, `mensajes/${currentSelectedID}`), { 
                 texto: note, 
                 timestamp: Date.now() 
